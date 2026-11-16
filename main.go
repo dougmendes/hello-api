@@ -12,6 +12,7 @@ import (
 	"time"
 )
 
+// version is set at build time: go build -ldflags "-X main.version=abc123"
 var version = "dev"
 
 type helloResponse struct {
@@ -27,6 +28,7 @@ func newRouter() http.Handler {
 		json.NewEncoder(w).Encode(helloResponse{Message: "hello world", Version: version})
 	})
 
+	// Used by Kubernetes liveness and readiness probes
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
@@ -49,19 +51,20 @@ func main() {
 	}
 
 	go func() {
-		logger.Info("servidor iniciado", "port", port, "version", version)
+		logger.Info("server started", "port", port, "version", version)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Error("falha no servidor", "error", err)
+			logger.Error("server failed", "error", err)
 			os.Exit(1)
 		}
 	}()
 
+	// Graceful shutdown: Kubernetes sends SIGTERM before killing the pod
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	<-stop
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	logger.Info("desligando")
+	logger.Info("shutting down")
 	srv.Shutdown(ctx)
 }

@@ -12,14 +12,14 @@ func TestHello(t *testing.T) {
 	newRouter().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/hello", nil))
 
 	if rec.Code != http.StatusOK {
-		t.Fatalf("status esperado 200, veio %d", rec.Code)
+		t.Fatalf("expected status 200, got %d", rec.Code)
 	}
 	var body helloResponse
 	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
-		t.Fatalf("resposta não é JSON: %v", err)
+		t.Fatalf("response is not valid JSON: %v", err)
 	}
 	if body.Message != "hello world" {
-		t.Errorf("esperado 'hello world', veio %q", body.Message)
+		t.Errorf("expected 'hello world', got %q", body.Message)
 	}
 }
 
@@ -28,6 +28,6 @@ func TestHelloRejectsPost(t *testing.T) {
 	newRouter().ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/hello", nil))
 
 	if rec.Code != http.StatusMethodNotAllowed {
-		t.Fatalf("status esperado 405, veio %d", rec.Code)
+		t.Fatalf("expected status 405, got %d", rec.Code)
 	}
 }
